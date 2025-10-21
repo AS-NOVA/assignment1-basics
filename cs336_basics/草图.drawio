@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="zpV_XuP0ZcOjdMWnb4KM" name="总体流程">
-        <mxGraphModel dx="572" dy="614" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="657" dy="333" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -8,119 +8,59 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="2" value="txt数据文件路径&lt;br&gt;input_path:str" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-                    <mxGeometry x="335" y="260" width="100" height="60" as="geometry"/>
+                    <mxGeometry x="880" y="170" width="100" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-40" style="edgeStyle=none;html=1;" parent="1" source="3" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="3" value="词表大小&lt;div&gt;vocab_size:int&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-                    <mxGeometry x="1110" y="870" width="90" height="60" as="geometry"/>
+                    <mxGeometry x="1108.25" y="1380" width="90" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-37" style="edgeStyle=none;html=1;" parent="1" source="4" target="33" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="764HmG8UyfAL9-z-iron-37" style="html=1;rounded=0;elbow=vertical;" edge="1" parent="1" source="4" target="-oTKJ_Lwxb_Tc46xKrAl-38">
+                <mxCell id="764HmG8UyfAL9-z-iron-37" style="html=1;rounded=0;elbow=vertical;" parent="1" source="4" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="910" y="940" as="targetPoint"/>
                         <Array as="points">
-                            <mxPoint x="798" y="860"/>
+                            <mxPoint x="800" y="1360"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="4" value="特殊词元列表&lt;div&gt;special_tokens:list[str]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
-                    <mxGeometry x="730" y="620" width="136.5" height="60" as="geometry"/>
+                    <mxGeometry x="730" y="580" width="136.5" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" style="edgeStyle=none;html=1;" parent="1" source="5" target="7" edge="1">
+                <mxCell id="8" style="edgeStyle=none;html=1;" parent="1" source="5" target="25" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="5" value="读取成文件指针&lt;div&gt;path_to_bytesfile()&lt;/div&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
-                    <mxGeometry x="315" y="350" width="140" height="60" as="geometry"/>
+                <mxCell id="5" value="读取成若干个bytes&lt;div&gt;&lt;span style=&quot;color: rgb(121, 94, 38); background-color: rgb(255, 255, 255); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre;&quot;&gt;path_to_chunks_bytes&lt;/span&gt;&lt;/div&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="940" y="260" width="140" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="15" style="edgeStyle=none;html=1;" parent="1" source="7" target="9" edge="1">
+                <mxCell id="45" style="edgeStyle=none;html=1;" parent="1" source="25" target="43" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="23" style="edgeStyle=none;html=1;" parent="1" source="7" target="22" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="7" value="二进制类型文件指针&lt;div&gt;BytesIO&lt;/div&gt;&lt;div&gt;(在内存中模仿BinaryIO)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="305" y="450" width="160" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="21" style="edgeStyle=none;html=1;" parent="1" source="9" target="20" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="9" value="切块分为多段&lt;div&gt;find_chunk_boundaries()&lt;/div&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="540" width="190" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="10" value="(可选)读入位数n&lt;div&gt;int&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="175" y="350" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="11" value="" style="endArrow=classic;html=1;" parent="1" source="10" target="5" edge="1">
-                    <mxGeometry width="50" height="50" relative="1" as="geometry">
-                        <mxPoint x="345" y="500" as="sourcePoint"/>
-                        <mxPoint x="395" y="450" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="17" style="edgeStyle=none;html=1;" parent="1" source="16" target="9" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="16" value="分成的块数&lt;div&gt;num_processes:int&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="520" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="19" style="edgeStyle=none;html=1;" parent="1" source="18" target="9" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="18" value="&lt;div&gt;用来分块的指定token&lt;/div&gt;split_special_token:bytes" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="90" y="590" width="150" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="24" style="edgeStyle=none;html=1;" parent="1" source="20" target="22" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="20" value="各块的边界位置&lt;div&gt;boundaries:list[int]&lt;/div&gt;&lt;div&gt;（标明各块边界位于第几个字节）&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="292.5" y="630" width="185" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="26" style="edgeStyle=none;html=1;" parent="1" source="22" target="25" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="22" value="用f.read&lt;div&gt;读出每段的内容&lt;/div&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-                    <mxGeometry x="510" y="540" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="30" style="edgeStyle=none;html=1;" parent="1" source="25" target="29" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="25" value="每段的实际内容&lt;div&gt;（多个）bytes&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="650" y="540" width="120" height="60" as="geometry"/>
+                <mxCell id="25" value="每段的实际内容&lt;div&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;&lt;font color=&quot;#000000&quot;&gt;list[&lt;/font&gt;&lt;/span&gt;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;bytes]&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="340" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="35" style="edgeStyle=none;html=1;strokeColor=default;dashed=1;" parent="1" source="27" target="33" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="27" value="GPT-2的识别模式&lt;div&gt;PAT:str&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-                    <mxGeometry x="1170" y="620" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="32" style="edgeStyle=none;html=1;" parent="1" source="29" target="31" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="29" value="bytes转str" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-                    <mxGeometry x="780" y="540" width="120" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="34" style="edgeStyle=none;html=1;" parent="1" source="31" target="33" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="31" value="每段的实际内容&lt;div&gt;（多个）str&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="910" y="540" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="738.25" y="500" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="37" style="edgeStyle=none;html=1;" parent="1" source="33" target="36" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <UserObject label="去掉特殊词元，预分词&lt;div&gt;（模式匹配）&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;color: rgb(59, 59, 59); background-color: rgb(255, 255, 255); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px; white-space: pre;&quot;&gt;&lt;span style=&quot;color: rgb(121, 94, 38);&quot;&gt;pre_tokenization_for_chunk&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" link="data:page/id,_x8nLHJjuNLrxOSk0CRX" id="33">
                     <mxCell style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
-                        <mxGeometry x="930" y="620" width="160" height="60" as="geometry"/>
+                        <mxGeometry x="930" y="580" width="160" height="60" as="geometry"/>
                     </mxCell>
                 </UserObject>
-                <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-39" style="edgeStyle=none;html=1;" parent="1" source="36" target="B9kwqg0V0t1540W7pURO-37" edge="1">
+                <mxCell id="50" style="edgeStyle=none;html=1;" parent="1" source="36" target="48" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="36" value="每段的pre-token列表&lt;div&gt;&lt;div&gt;（多个）list[str]&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="950" y="700" width="120" height="60" as="geometry"/>
+                <mxCell id="36" value="单段的pre-token列表&lt;div&gt;&lt;div&gt;list[str]&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="660" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-47" style="edgeStyle=none;html=1;" parent="1" source="-oTKJ_Lwxb_Tc46xKrAl-38" target="-oTKJ_Lwxb_Tc46xKrAl-45" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -130,38 +70,102 @@
                 </mxCell>
                 <UserObject label="BPE流程" link="data:page/id,_OFI2wqxZuWavmVBi_qw" id="-oTKJ_Lwxb_Tc46xKrAl-38">
                     <mxCell style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
-                        <mxGeometry x="1020" y="960" width="120" height="60" as="geometry"/>
+                        <mxGeometry x="1018.25" y="1470" width="120" height="60" as="geometry"/>
                     </mxCell>
                 </UserObject>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-42" style="edgeStyle=none;html=1;dashed=1;" parent="1" source="-oTKJ_Lwxb_Tc46xKrAl-41" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-41" value="初始化词表&lt;div&gt;256种不同的字节dict[int,&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;bytes]&lt;/span&gt;&lt;/div&gt;" style="shape=label;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;rounded=0;" parent="1" vertex="1">
-                    <mxGeometry x="860" y="960" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="858.25" y="1470" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-44" style="edgeStyle=none;html=1;dashed=1;" parent="1" source="-oTKJ_Lwxb_Tc46xKrAl-43" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-43" value="初始化merge列表&lt;div&gt;空列表&lt;/div&gt;&lt;div&gt;list[tuple[bytes,bytes]]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
-                    <mxGeometry x="860" y="1040" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="858.25" y="1550" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-45" value="最终词表" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="1191" y="980" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="1189.25" y="1490" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="-oTKJ_Lwxb_Tc46xKrAl-46" value="最终merge列表" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="1191" y="1060" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="1189.25" y="1570" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="B9kwqg0V0t1540W7pURO-39" style="edgeStyle=none;html=1;" parent="1" source="B9kwqg0V0t1540W7pURO-37" target="B9kwqg0V0t1540W7pURO-38" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="B9kwqg0V0t1540W7pURO-37" value="合并，且转为bytes&lt;div&gt;&lt;div style=&quot;color: rgb(59, 59, 59); background-color: rgb(255, 255, 255); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px; white-space: pre;&quot;&gt;&lt;span style=&quot;color: #795e26;&quot;&gt;get_all_pretoken_bytes&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
-                    <mxGeometry x="950" y="780" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="950" y="880" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="B9kwqg0V0t1540W7pURO-40" style="edgeStyle=none;html=1;" parent="1" source="B9kwqg0V0t1540W7pURO-38" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
+                <mxCell id="B9kwqg0V0t1540W7pURO-40" style="edgeStyle=none;html=1;" parent="1" target="-oTKJ_Lwxb_Tc46xKrAl-38" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1024.4038461538462" y="1400" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="57" value="" style="edgeStyle=none;html=1;" parent="1" source="B9kwqg0V0t1540W7pURO-38" target="56" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="B9kwqg0V0t1540W7pURO-38" value="全部pre-token列表&lt;div&gt;list[bytes]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="950" y="860" width="120" height="60" as="geometry"/>
+                <mxCell id="B9kwqg0V0t1540W7pURO-38" value="全部pre-token列表&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;每个pre-token标记次数&lt;br&gt;&lt;/font&gt;&lt;div&gt;dict[bytes,int]&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="940" y="960" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" style="edgeStyle=none;html=1;" parent="1" source="38" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="&lt;div&gt;并行份数&lt;/div&gt;n_parallel:int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="1034" y="170" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" style="edgeStyle=none;html=1;" parent="1" source="43" target="44" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" style="edgeStyle=none;html=1;rounded=0;curved=0;" parent="1" source="43" target="48" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1160" y="440"/>
+                            <mxPoint x="1160" y="760"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="43" value="用循环处理每个bytes" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="410" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" style="edgeStyle=none;html=1;" parent="1" source="44" target="33" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="单段的实际内容&lt;div&gt;bytes&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="490" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" style="edgeStyle=none;html=1;" parent="1" source="48" target="51" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="48" value="合并循环" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="730" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="55" style="edgeStyle=none;html=1;" parent="1" source="51" target="B9kwqg0V0t1540W7pURO-37" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="所有的pre-token列表&lt;div&gt;list[list[str]]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="950" y="810" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="59" style="edgeStyle=none;html=1;" parent="1" source="56" target="58" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="bytes打碎成整数列&lt;div&gt;（注意此时没有特殊词元，所有文本字节都彼此独立）&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;shape=parallelogram;perimeter=parallelogramPerimeter;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="858.25" y="1040" width="305" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="61" value="" style="edgeStyle=none;html=1;" parent="1" source="58" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="58" value="全部pre-token列表（字节整数值版）&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;每个pre-token标记次数&lt;br&gt;&lt;/font&gt;&lt;div&gt;dict[tuple[int,...],int]&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="910.19" y="1120" width="199.63" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="63" value="" style="edgeStyle=none;html=1;" parent="1" source="60" target="62" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="建立反向索引" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="950.7450000000001" y="1200" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="62" value="记录当前每个字节对都出现在哪些pre-token里（不记录位置，基本遍历的起）&lt;div&gt;dict[tuple[int,int],list[tuple[int,...],int]]&lt;/div&gt;" style="whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="896.12" y="1270" width="229.25" height="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
@@ -307,6 +311,14 @@
                 <mxCell id="Fs23jj995rzJSJqFzmY2-1" value="&lt;div&gt;特殊词元列表&lt;/div&gt;special_tokens: list[str]" style="shape=label;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
                     <mxGeometry x="1330" y="980" width="140" height="60" as="geometry"/>
                 </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="0QVHRDpucLgk_zg3-g_Z" name="transformer">
+        <mxGraphModel dx="657" dy="333" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
             </root>
         </mxGraphModel>
     </diagram>

@@ -562,7 +562,7 @@ def get_tokenizer(
     raise NotImplementedError
 
 
-from cs336_basics.bpe import *
+from cs336_basics.mybpe import *
 
 def run_train_bpe(
     input_path: str | os.PathLike,
@@ -593,7 +593,7 @@ def run_train_bpe(
     """
 
 
-    vocab, merges = train_bpe(
+    vocab, merges = my_bpe(
         input_path=input_path,
         vocab_size=vocab_size,
         special_tokens=special_tokens,
