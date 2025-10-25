@@ -6,10 +6,13 @@ from typing import IO, Any, BinaryIO
 
 import numpy.typing as npt
 import torch
+import torch.nn as nn
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
+from cs336_basics.mymodule import *
 
+# passed
 def run_linear(
     d_in: int,
     d_out: int,
@@ -28,10 +31,13 @@ def run_linear(
     Returns:
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
+    kwargs = {"device": in_features.device, "dtype": in_features.dtype}
+    linear = Linear(d_in, d_out, **kwargs)
+    # 对模块调用 load_state_dict() 方法，载入一个字典，key为模块内部设置的参数名，value为要载入的值
+    linear.load_state_dict({"W":weights})
+    return linear(in_features)
 
-    raise NotImplementedError
-
-
+# passed
 def run_embedding(
     vocab_size: int,
     d_model: int,
@@ -50,10 +56,12 @@ def run_embedding(
     Returns:
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
+    kwargs = {"device": weights.device, "dtype": weights.dtype}
+    embedding = Embedding(num_embeddings=vocab_size, embedding_dim=d_model, **kwargs)
+    embedding.load_state_dict({"embedding_matrix":weights})
+    return embedding(token_ids)
 
-    raise NotImplementedError
-
-
+# passed（未核对答案，可能不够标准）
 def run_swiglu(
     d_model: int,
     d_ff: int,
@@ -83,7 +91,12 @@ def run_swiglu(
     # swiglu.w1.weight.data = w1_weight
     # swiglu.w2.weight.data = w2_weight
     # swiglu.w3.weight.data = w3_weight
-    raise NotImplementedError
+
+    swiglu = SwiGLUFFN(d_model=d_model, d_ff=d_ff, device=in_features.device, dtype = in_features.dtype)
+    swiglu.linear1.W.data = w1_weight
+    swiglu.linear2.W.data = w2_weight
+    swiglu.linear3.W.data = w3_weight
+    return swiglu(in_features)
 
 
 def run_scaled_dot_product_attention(
@@ -357,7 +370,7 @@ def run_transformer_lm(
     """
     raise NotImplementedError
 
-
+#passed
 def run_rmsnorm(
     d_model: int,
     eps: float,
@@ -378,7 +391,10 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    raise NotImplementedError
+    kwargs = {"device": in_features.device, "dtype": in_features.dtype}
+    rms = RMSNorm(d_model=d_model, eps=eps, **kwargs)
+    rms.load_state_dict({"gain_parameter":weights})
+    return rms(in_features)
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
@@ -563,7 +579,7 @@ def get_tokenizer(
 
 
 from cs336_basics.mybpe import *
-
+# passed
 def run_train_bpe(
     input_path: str | os.PathLike,
     vocab_size: int,
