@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
-from einops import rearrange, einsum, reduce
-from jaxtyping import Float, Int
+from torch import Tensor
+from einops import rearrange, einsum, reduce, pack, unpack
+from jaxtyping import Float,  Bool
+import math
 
 class Linear(nn.Module) :
     def __init__(self, 
@@ -122,6 +124,82 @@ class SwiGLUFFN(nn.Module):
         activates = swish(self.linear1(x))
         gates = self.linear3(x)
         return self.linear2(activates * gates)
+
+class RotaryPositionalEmbedding(nn.Module):
+    cosines: torch.Tensor
+    sines: torch.Tensor
+    def __init__(self, theta: float, d_k: int, max_seq_len: int, device=None) -> None:
+        # 初始化函数只需要负责根据输入的构建并存储起所有的正余弦值，便于使用
+        super().__init__()
+        assert d_k%2==0 , "dimension of Q and K should be even for RoPE"
+        halfd = int(d_k / 2)
+
+        positions = torch.arange(max_seq_len, device=device) # 序列位置参数：0~maxlen-1
+        S = math.pow(theta,-2/d_k)
+        thetas = torch.pow(S,torch.arange(halfd,device=device)) # theta的指数从0~大约-1，各分量的最小旋转角从1~1/theta都有
+        thetas_with_position = einsum(positions,thetas,"maxlen, halfdk -> maxlen halfdk")
+
+        self.register_buffer("cosines", 
+                             torch.cos(thetas_with_position),   
+                             persistent=False)
+        self.register_buffer("sines", 
+                             torch.sin(thetas_with_position),
+                             persistent=False)
     
+        self.sines
+
+    def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+        # 先把输入的最后一位按奇偶分开，分别进行乘法后重新进行线性组合
+        # 使用sin和cos值时注意截断
+        # x: (..., len, d_k)
+        # token_positions: (..., len)
+        print("输入tensor维度：",x.shape)
+        print("输入位置索引维度：",token_positions.shape)
+        rearranged_x = rearrange(x,"... len (halfdk two) -> ... len halfdk two",two=2)
+        print("")
+        oddx = rearranged_x[...,1] # ... len halfdk
+        evenx = rearranged_x[...,0] # ... len halfdk
+        print("输入按奇偶切分后维度：",oddx.shape)
+        cut_cosines = self.cosines[token_positions]
+        cut_sines = self.sines[token_positions]
+        # 三角函数阵： halfdk         
+        rotated_oddx = einsum(oddx, cut_cosines , "... len halfdk, len halfdk -> ... len halfdk") + \
+                      einsum(evenx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
+        rotated_evenx = einsum(evenx, cut_cosines, "... len halfdk, len halfdk -> ... len halfdk") - \
+                       einsum(oddx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
+        
+        res = rearrange([rotated_evenx, rotated_oddx],
+                        "two ... len halfdk -> ... len (halfdk two)")
+        return res
+
+def softmax(x: torch.Tensor, dim: int) -> torch.Tensor:
+    xdim = len(x.shape)
+    dim = dim % xdim
+    pat_origin = " ".join([f"d{i}" for i in range(xdim)])
+    pat_reduce = " ".join([f"d{i}" if i != dim else "1" for i in range(xdim)])
+    x_max = reduce(x,f"{pat_origin}->{pat_reduce}","max")
+    expx = torch.exp(x - x_max)
+    sum_expx = reduce(expx,f"{pat_origin}->{pat_reduce}","sum")
+    res = expx / sum_expx
+    return res
+
+def scaled_dot_product_attention(
+    Q: Float[Tensor, " ... queries d_k"],
+    K: Float[Tensor, " ... keys d_k"],
+    V: Float[Tensor, " ... values d_v"],
+    mask: Bool[Tensor, " ... queries keys"] | None = None,
+) -> Float[Tensor, " ... queries d_v"]:
+    d_k = Q.shape[-1]
+    scaled_prod = einsum(Q,K,"... queries d_k, ... keys d_k -> ... queries keys") / math.pow(d_k, 1/2)
+                    
+    if mask != None:
+        scaled_prod.masked_fill_(~mask, -torch.inf)
+
+    probs = softmax(scaled_prod,-1)
+    res = einsum(probs, V, "... queries keys_also_values, ... keys_also_values d_v -> ... queries d_v")
+    return res
+
+
+
 
 
