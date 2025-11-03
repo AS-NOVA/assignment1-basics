@@ -12,6 +12,7 @@ from torch import Tensor
 
 from cs336_basics.mymodule import *
 from cs336_basics.mybpe import *
+from cs336_basics.mymodule import _copy_param
 
 # passed
 def run_linear(
@@ -211,13 +212,12 @@ def run_multihead_self_attention_with_rope(
                                   max_seq_len=max_seq_len,
                                   use_rope=True,
                                   rope_theta=theta,
-                                  token_positions=token_positions,
                                   **in_data_kwargs)
     mhsa.load_state_dict({"linear_Wq.W":q_proj_weight,
                           "linear_Wk.W":k_proj_weight,
                           "linear_Wv.W":v_proj_weight,
                           "linear_Wo.W":o_proj_weight})
-    return mhsa(in_features)
+    return mhsa(in_features,token_positions)
 
 # passed 但是有点奇怪 高级索引不是很懂 导致einsum不会写 最后直接放弃改用*乘了。。
 def run_rope(
@@ -242,7 +242,7 @@ def run_rope(
     rope = RotaryPositionalEmbedding(theta=theta, d_k=d_k, max_seq_len=max_seq_len, device=in_query_or_key.device)
     return rope(in_query_or_key, token_positions)
 
-
+# passed 注意可以回头考虑一下positions的问题
 def run_transformer_block(
     d_model: int,
     num_heads: int,
@@ -313,9 +313,38 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    block = TransformerBlock(d_model=d_model,
+                             num_heads=num_heads,
+                             d_ff=d_ff,
+                             max_seq_len=max_seq_len,
+                             theta=theta,
+                             device=in_features.device,
+                             dtype=in_features.dtype)
+    
+    # Load attention projection weights
+    block.mhsa.linear_Wq.W.data.copy_(weights["attn.q_proj.weight"])
+    block.mhsa.linear_Wk.W.data.copy_(weights["attn.k_proj.weight"])
+    block.mhsa.linear_Wv.W.data.copy_(weights["attn.v_proj.weight"])
+    block.mhsa.linear_Wo.W.data.copy_(weights["attn.output_proj.weight"])
+
+    # Load RMSNorm weights
+    block.rms1.gain_parameter.data.copy_(weights["ln1.weight"])
+    block.rms2.gain_parameter.data.copy_(weights["ln2.weight"])
+
+    # Load FFN weights (transpose needed for 1 and 3)
+    block.ffn.linear1.W.data.copy_(weights["ffn.w1.weight"])
+    block.ffn.linear2.W.data.copy_(weights["ffn.w2.weight"]) 
+    block.ffn.linear3.W.data.copy_(weights["ffn.w3.weight"])
+    
+    B, S, _ = in_features.shape
+    positions = torch.arange(S, device=in_features.device)
+
+    # 4. Run the forward pass ----------------------------------------------
+    res = block(in_features, token_positions=positions)      # (B, S, d_model)
+    return res
 
 
+# 抄答案pass
 def run_transformer_lm(
     vocab_size: int,
     context_length: int,
@@ -395,7 +424,58 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    device = in_indices.device
+    dtype  = next(iter(weights.values())).dtype             # assume all same dtype
+
+    # 1) construct the model skeleton
+    model = TransformerLanguageModel(
+        vocab_size     = vocab_size,
+        context_length = context_length,
+        num_layers     = num_layers,
+        d_model        = d_model,
+        num_heads      = num_heads,
+        d_ff           = d_ff,
+        rope_theta     = rope_theta,
+        device         = device,
+        dtype          = dtype,
+    )#.eval()                                                 # inference mode
+
+    # 2) load the weights ----------------------------------------------------
+    with torch.no_grad():
+        # (a) token embedding  (also implicitly ties lm_head)
+        _copy_param(model.emb.embedding_matrix,
+                    weights["token_embeddings.weight"])
+
+        # (b) per-layer parameters
+        for layer_idx in range(num_layers):
+            pfx   = f"layers.{layer_idx}."
+            block = model.blocks[layer_idx]
+
+            # ── attention projections
+            _copy_param(block.mhsa.linear_Wq.W,  weights[pfx + "attn.q_proj.weight"])
+            _copy_param(block.mhsa.linear_Wk.W,  weights[pfx + "attn.k_proj.weight"])
+            _copy_param(block.mhsa.linear_Wv.W,  weights[pfx + "attn.v_proj.weight"])
+            _copy_param(block.mhsa.linear_Wo.W,  weights[pfx + "attn.output_proj.weight"])
+
+            # ── RMSNorm weights
+            _copy_param(block.rms1.gain_parameter, weights[pfx + "ln1.weight"])
+            _copy_param(block.rms2.gain_parameter, weights[pfx + "ln2.weight"])
+
+            # ── feed-forward (SwiGLU) weights
+            _copy_param(block.ffn.linear1.W, weights[pfx + "ffn.w1.weight"])
+            _copy_param(block.ffn.linear2.W, weights[pfx + "ffn.w2.weight"])
+            _copy_param(block.ffn.linear3.W, weights[pfx + "ffn.w3.weight"])
+
+        # (c) final layer-norm
+        _copy_param(model.out_norm.gain_parameter, weights["ln_final.weight"])
+
+
+        # (d) (optional) make sure tied output embedding matches lm_head if provided
+        _copy_param(model.head.W, weights["lm_head.weight"])
+
+    # 3) run the forward pass and return logits
+    with torch.no_grad():
+        return model(in_indices)
 
 #passed
 def run_rmsnorm(
@@ -476,7 +556,7 @@ def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, "
     """
     return softmax(in_features,dim)
 
-
+# PASSED
 def run_cross_entropy(
     inputs: Float[Tensor, " batch_size vocab_size"], targets: Int[Tensor, " batch_size"]
 ) -> Float[Tensor, ""]:
@@ -492,7 +572,7 @@ def run_cross_entropy(
     Returns:
         Float[Tensor, ""]: The average cross-entropy loss across examples.
     """
-    raise NotImplementedError
+    return cross_entropy(inputs,targets)
 
 
 def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float) -> None:
@@ -506,12 +586,14 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
     """
     raise NotImplementedError
 
-
+# passed（未核对）
+from cs336_basics.myoptimizer import *
 def get_adamw_cls() -> Any:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    raise NotImplementedError
+    return AdamW
+    
 
 
 def run_get_lr_cosine_schedule(

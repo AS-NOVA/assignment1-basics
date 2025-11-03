@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="zpV_XuP0ZcOjdMWnb4KM" name="总体流程">
-        <mxGraphModel dx="657" dy="614" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="516" dy="379" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -310,6 +310,59 @@
                 </mxCell>
                 <mxCell id="Fs23jj995rzJSJqFzmY2-1" value="&lt;div&gt;特殊词元列表&lt;/div&gt;special_tokens: list[str]" style="shape=label;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
                     <mxGeometry x="1330" y="980" width="140" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="pvAeRpYhmCvAZro1jx6n" name="第 4 页">
+        <mxGraphModel dx="1169" dy="281" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="cff3zfKECSxVweAkzkH2-7" style="edgeStyle=none;html=1;" parent="1" source="cff3zfKECSxVweAkzkH2-1" target="cff3zfKECSxVweAkzkH2-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-1" value="基础角度&lt;div&gt;theta:float&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="60" width="80" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-8" style="edgeStyle=none;html=1;" parent="1" source="cff3zfKECSxVweAkzkH2-3" target="cff3zfKECSxVweAkzkH2-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-3" value="查询空间维度&lt;div&gt;d_k:int&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="60" width="80" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-9" style="edgeStyle=none;html=1;" parent="1" source="cff3zfKECSxVweAkzkH2-4" target="cff3zfKECSxVweAkzkH2-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-4" value="最大序列长度&lt;div&gt;max_seq_len:int&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="60" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-5" value="两张大表&lt;div&gt;Float[Tensor,&lt;/div&gt;&lt;div&gt;&quot;max_seq_len halfdk&quot;]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="220" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-10" style="edgeStyle=none;html=1;" parent="1" source="cff3zfKECSxVweAkzkH2-6" target="cff3zfKECSxVweAkzkH2-5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-6" value="init" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="140" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-11" value="token_positions&lt;div&gt;Int[Tensor,&lt;/div&gt;&lt;div&gt;&quot;... sequence_length&quot;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="220" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="96nS4DTWBs6fhqMPlH4M-2" style="edgeStyle=none;html=1;" parent="1" source="cff3zfKECSxVweAkzkH2-12" target="96nS4DTWBs6fhqMPlH4M-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cff3zfKECSxVweAkzkH2-12" value="输入张量&lt;div&gt;Float[Tensor,&lt;/div&gt;&lt;div&gt;&quot;... sequence_length d_k&quot;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="220" width="150" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="96nS4DTWBs6fhqMPlH4M-1" value="按奇偶分开&lt;div&gt;两个 Float[Tensor,&lt;/div&gt;&lt;div&gt;&quot;... sequence_length halfdk&quot;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="372.5" y="300" width="165" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="96nS4DTWBs6fhqMPlH4M-3" value="&lt;b&gt;&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;这里halfdk&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;b&gt;&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;是d_k的一半&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="230" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="96nS4DTWBs6fhqMPlH4M-4" value="这两者的前缀维度默认相同" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="170" width="60" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

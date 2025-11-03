@@ -132,6 +132,9 @@ class RotaryPositionalEmbedding(nn.Module):
         # 初始化函数只需要负责根据输入的构建并存储起所有的正余弦值，便于使用
         super().__init__()
         assert d_k%2==0 , "dimension of Q and K should be even for RoPE"
+        self.theta = theta
+        self.d_k = d_k
+        self.max_seq_len = max_seq_len
         halfd = int(d_k / 2)
 
         positions = torch.arange(max_seq_len, device=device) # 序列位置参数：0~maxlen-1
@@ -147,14 +150,23 @@ class RotaryPositionalEmbedding(nn.Module):
                              persistent=False)
     
     def forward(self, 
-                x: torch.Tensor, 
-                token_positions: torch.Tensor) -> torch.Tensor:
+                x: Float[Tensor, " ... sequence_length d_k"], 
+                token_positions: Int[Tensor, " ... sequence_length"]
+                ) -> Float[Tensor, " ... sequence_length d_k"]:
+        print("输入tensor维度：",x.shape)
+        print("输入位置索引维度：",token_positions.shape)
+
+        if x.shape[:-1] != token_positions.shape:
+            pass
+            # raise ValueError("token_positions shape must match x shape except for the last dimension (aka d_k or dimension of Q/K latent space)")
+        if x.shape[-1] != self.d_k:
+            raise ValueError("last dimension of input x must match the d_k used when initializing RoPE")
+        
         # 先把输入的最后一位按奇偶分开，分别进行乘法后重新进行线性组合
         # 使用sin和cos值时注意截断
         # x: (..., len, d_k)
         # token_positions: (..., len)
-        #print("输入tensor维度：",x.shape)
-        #print("输入位置索引维度：",token_positions.shape)
+        
         rearranged_x = rearrange(x,"... len (halfdk two) -> ... len halfdk two",two=2)
         #print("")
         oddx = rearranged_x[...,1] # ... len halfdk
@@ -162,11 +174,16 @@ class RotaryPositionalEmbedding(nn.Module):
         #print("输入按奇偶切分后维度：",oddx.shape)
         cut_cosines = self.cosines[token_positions]
         cut_sines = self.sines[token_positions]
+
+        #print("cutcosinesshape",cut_cosines.shape,"oddxshape", oddx.shape)
+        #assert cut_cosines.shape == oddx.shape, "三角函数阵的形状应与分奇偶后的输入相同"
         # 三角函数阵： halfdk         
         # rotated_oddx = einsum(oddx, cut_cosines , "... len halfdk, len halfdk -> ... len halfdk") + \
         #              einsum(evenx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
         # rotated_evenx = einsum(evenx, cut_cosines, "... len halfdk, len halfdk -> ... len halfdk") - \
         #               einsum(oddx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
+        
+        # 应该都是等大小的
         rotated_oddx = oddx * cut_cosines + evenx * cut_sines
         rotated_evenx = evenx * cut_cosines - oddx * cut_sines
 
@@ -210,7 +227,7 @@ class MultiHeadSelfAttention(nn.Module):
                  max_seq_len:int,
                  use_rope:bool = False,
                  rope_theta:float = 10000.0,
-                 token_positions:Int[Tensor, " ... sequence_length"] | None = None,
+                 
                  device:torch.device | None = None,
                  dtype:torch.dtype | None = None
                 ) -> None:
@@ -220,7 +237,6 @@ class MultiHeadSelfAttention(nn.Module):
         self.max_seq_len = max_seq_len
         self.use_rope = use_rope
         self.rope_theta = rope_theta
-        self.token_positions = token_positions
         parameter_kwargs = {"device":device, "dtype":dtype}
 
         if self.d_model % self.num_heads != 0:
@@ -240,7 +256,8 @@ class MultiHeadSelfAttention(nn.Module):
                                                   self.max_seq_len,)
 
     def forward(self, 
-                x:Float[Tensor,"... len d_model"]
+                x:Float[Tensor,"... len d_model"],
+                token_positions:Int[Tensor, " ... sequence_length"] | None = None, #注意位置参数是随着模块的使用而传入的呀
                 )->Float[Tensor,"... len d_model"]:
         len = x.shape[-2]
         Q = self.linear_Wq(x)
@@ -251,8 +268,8 @@ class MultiHeadSelfAttention(nn.Module):
 
         #对每个head进行相同的rope
         if self.use_rope == True:
-            Qs = self.rope(Qs,self.token_positions)
-            Ks = self.rope(Ks,self.token_positions)
+            Qs = self.rope(Qs,token_positions)
+            Ks = self.rope(Ks,token_positions)
 
         Vs = rearrange(V,"... len (num_heads d_head) -> ... num_heads len d_head", num_heads = self.num_heads)
         mask = self.pre_cache_mask[:len,:len]
@@ -267,6 +284,124 @@ class TransformerBlock(nn.Module):
                  num_heads:int,
                  d_ff: int,
                  max_seq_len: int,
-                 theta: float,)->None:
+                 theta: float,
+                 device:torch.device | None = None,
+                 dtype:torch.dtype | None = None
+                 )->None:
         super().__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        if self.d_model % self.num_heads != 0:
+            raise ValueError("num_heads cant divide d_model")
+        self.d_ff = d_ff
+        self.max_seq_len = max_seq_len
+        self.theta = theta
+        parameter_kwargs = {"device":device, "dtype":dtype}
 
+        self.rms1 = RMSNorm(d_model=d_model,
+                       **parameter_kwargs)
+        self.rms2 = RMSNorm(d_model=d_model,
+                       **parameter_kwargs)
+        
+        self.mhsa = MultiHeadSelfAttention(
+            d_model=d_model,
+            num_heads=num_heads,
+            max_seq_len=max_seq_len,
+            use_rope=True,          # 强制rope
+            rope_theta=theta,
+            **parameter_kwargs
+        )
+
+        self.ffn = SwiGLUFFN(
+            d_model=d_model,
+            d_ff=d_ff,
+            **parameter_kwargs
+        )
+
+    def forward(self,
+                x:Float[Tensor,"batch_size seq_len d_model"],
+                token_positions:Int[Tensor,"batch_size seq_len"]
+                )->Float[Tensor,"batch_size seq_len d_model"]:
+        x += self.mhsa.forward(self.rms1.forward(x),token_positions)
+        x += self.ffn.forward(self.rms2.forward(x))
+        return x
+    
+
+
+
+
+class TransformerLanguageModel(nn.Module):
+    def __init__(self, 
+                 vocab_size: int,
+                 context_length: int,
+                 num_layers: int,
+                 d_model: int,
+                 num_heads: int,
+                 d_ff: int,
+                 rope_theta: float,
+                 device:torch.device | None = None,
+                 dtype:torch.dtype | None = None
+                ) -> None:
+        super().__init__()
+        self.emb = Embedding(num_embeddings=vocab_size,
+                             embedding_dim=d_model,
+                             device=device,
+                             dtype=dtype)
+        self.blocks:list[TransformerBlock] = []
+        for _ in range(num_layers):
+            self.blocks.append(TransformerBlock(d_model=d_model,
+                                              num_heads=num_heads,
+                                              d_ff=d_ff,
+                                              max_seq_len=context_length,
+                                              theta=rope_theta,
+                                              device=device,
+                                              dtype=dtype) )
+        self.out_norm = RMSNorm(d_model=d_model,
+                                device=device,
+                                dtype=dtype)
+        self.head = Linear(in_features=d_model,
+                           out_features=vocab_size,
+                           device=device,
+                           dtype=dtype)
+        
+    def forward(self,
+               input_tokens:Int[Tensor,"batch_size seq_len"]
+               ):
+        s = input_tokens.shape[-1]
+        x = self.emb.forward(input_tokens)
+        positions = torch.arange(s, device=x.device)
+        for block in self.blocks:
+            x = block.forward(x,positions)
+        x = self.out_norm.forward(x)
+        logits = self.head.forward(x)
+        return logits
+    
+
+
+def _copy_param(target: torch.Tensor, source: torch.Tensor) -> None:
+    """
+    Copy `source` into `target` in-place, transposing `source` if that
+    is what makes the shapes line up.
+    """
+    if source.shape == target.shape:
+        target.data.copy_(source)
+    elif source.T.shape == target.shape:
+        target.data.copy_(source.T)
+    else:
+        raise ValueError(f"Shape mismatch: cannot load parameter of shape {source.shape} "
+                         f"into tensor of shape {target.shape}")
+
+
+def cross_entropy(x:Float[Tensor,"... len vocab_size"],   # 省略了前置的batch，而这里实际上len也可以被看成一种batch
+                  real:Int[Tensor,"... len"]
+                 )->Float[Tensor, ""]:
+    xmax = reduce(x,"... v -> ... 1","max")
+    x -= xmax
+    expx = torch.exp(x)
+    logsumexps = torch.log(reduce(expx,"... v -> ...","sum"))
+    real = rearrange(real,"... -> ... 1")
+    select = torch.gather(input=x,dim=-1,index=real)
+    select = rearrange(select,"... 1 -> ...")
+    res = - select + logsumexps
+    ans = reduce(res,"... -> ","mean")
+    return ans
