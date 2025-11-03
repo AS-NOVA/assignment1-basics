@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="zpV_XuP0ZcOjdMWnb4KM" name="总体流程">
-        <mxGraphModel dx="657" dy="333" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="657" dy="614" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -226,7 +226,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="_OFI2wqxZuWavmVBi_qw" name="bpe核心流程">
-        <mxGraphModel dx="572" dy="614" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="524" dy="252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -305,20 +305,12 @@
                 <mxCell id="-6XXixKf4lE6W-V20lfz-47" value="每个pre-token内部字节token的序号&lt;div&gt;list[list[int]]&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
                     <mxGeometry x="860" y="610" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="8mX1xu5jXllFjTXJwBUr-1" style="edgeStyle=none;html=1;" edge="1" parent="1" source="Fs23jj995rzJSJqFzmY2-1" target="-6XXixKf4lE6W-V20lfz-35">
+                <mxCell id="8mX1xu5jXllFjTXJwBUr-1" style="edgeStyle=none;html=1;" parent="1" source="Fs23jj995rzJSJqFzmY2-1" target="-6XXixKf4lE6W-V20lfz-35" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="Fs23jj995rzJSJqFzmY2-1" value="&lt;div&gt;特殊词元列表&lt;/div&gt;special_tokens: list[str]" style="shape=label;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                <mxCell id="Fs23jj995rzJSJqFzmY2-1" value="&lt;div&gt;特殊词元列表&lt;/div&gt;special_tokens: list[str]" style="shape=label;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
                     <mxGeometry x="1330" y="980" width="140" height="60" as="geometry"/>
                 </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
-    <diagram id="0QVHRDpucLgk_zg3-g_Z" name="transformer">
-        <mxGraphModel dx="657" dy="333" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
             </root>
         </mxGraphModel>
     </diagram>

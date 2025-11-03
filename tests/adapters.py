@@ -11,6 +11,7 @@ from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
 from cs336_basics.mymodule import *
+from cs336_basics.mybpe import *
 
 # passed
 def run_linear(
@@ -119,7 +120,7 @@ def run_scaled_dot_product_attention(
     """
     return scaled_dot_product_attention(Q,K,V,mask)
 
-
+# passed（未核对）
 def run_multihead_self_attention(
     d_model: int,
     num_heads: int,
@@ -151,9 +152,21 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    len = in_features.shape[-2]
+    in_data_kwargs = {"device":in_features.device,
+                      "dtype":in_features.dtype}
+    mhsa = MultiHeadSelfAttention(d_model=d_model,
+                                  num_heads=num_heads,
+                                  max_seq_len=len,
+                                  use_rope=False,
+                                  **in_data_kwargs)
+    mhsa.load_state_dict({"linear_Wq.W":q_proj_weight,
+                          "linear_Wk.W":k_proj_weight,
+                          "linear_Wv.W":v_proj_weight,
+                          "linear_Wo.W":o_proj_weight})
+    return mhsa(in_features)
 
-
+# passed（未核对）
 def run_multihead_self_attention_with_rope(
     d_model: int,
     num_heads: int,
@@ -191,9 +204,22 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    in_data_kwargs = {"device":in_features.device,
+                      "dtype":in_features.dtype}
+    mhsa = MultiHeadSelfAttention(d_model=d_model,
+                                  num_heads=num_heads,
+                                  max_seq_len=max_seq_len,
+                                  use_rope=True,
+                                  rope_theta=theta,
+                                  token_positions=token_positions,
+                                  **in_data_kwargs)
+    mhsa.load_state_dict({"linear_Wq.W":q_proj_weight,
+                          "linear_Wk.W":k_proj_weight,
+                          "linear_Wv.W":v_proj_weight,
+                          "linear_Wo.W":o_proj_weight})
+    return mhsa(in_features)
 
-# passed 但是有点奇怪
+# passed 但是有点奇怪 高级索引不是很懂 导致einsum不会写 最后直接放弃改用*乘了。。
 def run_rope(
     d_k: int,
     theta: float,
@@ -578,8 +604,6 @@ def get_tokenizer(
     """
     raise NotImplementedError
 
-
-from cs336_basics.mybpe import *
 # passed
 def run_train_bpe(
     input_path: str | os.PathLike,

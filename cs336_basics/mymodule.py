@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 from einops import rearrange, einsum, reduce, pack, unpack
-from jaxtyping import Float,  Bool
+from jaxtyping import Float, Int, Bool
 import math
 
 class Linear(nn.Module) :
@@ -146,28 +146,30 @@ class RotaryPositionalEmbedding(nn.Module):
                              torch.sin(thetas_with_position),
                              persistent=False)
     
-        self.sines
-
-    def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+    def forward(self, 
+                x: torch.Tensor, 
+                token_positions: torch.Tensor) -> torch.Tensor:
         # 先把输入的最后一位按奇偶分开，分别进行乘法后重新进行线性组合
         # 使用sin和cos值时注意截断
         # x: (..., len, d_k)
         # token_positions: (..., len)
-        print("输入tensor维度：",x.shape)
-        print("输入位置索引维度：",token_positions.shape)
+        #print("输入tensor维度：",x.shape)
+        #print("输入位置索引维度：",token_positions.shape)
         rearranged_x = rearrange(x,"... len (halfdk two) -> ... len halfdk two",two=2)
-        print("")
+        #print("")
         oddx = rearranged_x[...,1] # ... len halfdk
         evenx = rearranged_x[...,0] # ... len halfdk
-        print("输入按奇偶切分后维度：",oddx.shape)
+        #print("输入按奇偶切分后维度：",oddx.shape)
         cut_cosines = self.cosines[token_positions]
         cut_sines = self.sines[token_positions]
         # 三角函数阵： halfdk         
-        rotated_oddx = einsum(oddx, cut_cosines , "... len halfdk, len halfdk -> ... len halfdk") + \
-                      einsum(evenx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
-        rotated_evenx = einsum(evenx, cut_cosines, "... len halfdk, len halfdk -> ... len halfdk") - \
-                       einsum(oddx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
-        
+        # rotated_oddx = einsum(oddx, cut_cosines , "... len halfdk, len halfdk -> ... len halfdk") + \
+        #              einsum(evenx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
+        # rotated_evenx = einsum(evenx, cut_cosines, "... len halfdk, len halfdk -> ... len halfdk") - \
+        #               einsum(oddx, cut_sines, "... len halfdk, len halfdk -> ... len halfdk")
+        rotated_oddx = oddx * cut_cosines + evenx * cut_sines
+        rotated_evenx = evenx * cut_cosines - oddx * cut_sines
+
         res = rearrange([rotated_evenx, rotated_oddx],
                         "two ... len halfdk -> ... len (halfdk two)")
         return res
@@ -199,7 +201,72 @@ def scaled_dot_product_attention(
     res = einsum(probs, V, "... queries keys_also_values, ... keys_also_values d_v -> ... queries d_v")
     return res
 
+class MultiHeadSelfAttention(nn.Module):
+    # 这里多头注意力的算法参考原始transformer
+    # 所以dk = dv = dmodel / heads
+    def __init__(self, 
+                 d_model:int,
+                 num_heads:int,
+                 max_seq_len:int,
+                 use_rope:bool = False,
+                 rope_theta:float = 10000.0,
+                 token_positions:Int[Tensor, " ... sequence_length"] | None = None,
+                 device:torch.device | None = None,
+                 dtype:torch.dtype | None = None
+                ) -> None:
+        super().__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.max_seq_len = max_seq_len
+        self.use_rope = use_rope
+        self.rope_theta = rope_theta
+        self.token_positions = token_positions
+        parameter_kwargs = {"device":device, "dtype":dtype}
 
+        if self.d_model % self.num_heads != 0:
+            raise ValueError("num_heads cant divide d_model")
+        
+        self.d_head = int(self.d_model / self.num_heads)
+        self.linear_Wq = Linear(self.d_model, self.d_model, **parameter_kwargs)
+        self.linear_Wk = Linear(self.d_model, self.d_model, **parameter_kwargs)
+        self.linear_Wv = Linear(self.d_model, self.d_model, **parameter_kwargs)
+        self.linear_Wo = Linear(self.d_model, self.d_model, **parameter_kwargs)
 
+        self.pre_cache_mask =torch.tril(torch.ones(max_seq_len, max_seq_len)).bool()
 
+        if self.use_rope == True:
+            self.rope = RotaryPositionalEmbedding(self.rope_theta,
+                                                  self.d_head,
+                                                  self.max_seq_len,)
+
+    def forward(self, 
+                x:Float[Tensor,"... len d_model"]
+                )->Float[Tensor,"... len d_model"]:
+        len = x.shape[-2]
+        Q = self.linear_Wq(x)
+        K = self.linear_Wk(x)
+        V = self.linear_Wv(x)
+        Qs = rearrange(Q,"... len (num_heads d_head) -> ... num_heads len d_head", num_heads = self.num_heads)
+        Ks = rearrange(K,"... len (num_heads d_head) -> ... num_heads len d_head", num_heads = self.num_heads)
+
+        #对每个head进行相同的rope
+        if self.use_rope == True:
+            Qs = self.rope(Qs,self.token_positions)
+            Ks = self.rope(Ks,self.token_positions)
+
+        Vs = rearrange(V,"... len (num_heads d_head) -> ... num_heads len d_head", num_heads = self.num_heads)
+        mask = self.pre_cache_mask[:len,:len]
+        As = scaled_dot_product_attention(Qs,Ks,Vs,mask)
+        A = rearrange(As,"... num_heads len d_head -> ... len (num_heads d_head)")
+        res = self.linear_Wo(A)
+        return res        
+
+class TransformerBlock(nn.Module):
+    def __init__(self,
+                 d_model:int,
+                 num_heads:int,
+                 d_ff: int,
+                 max_seq_len: int,
+                 theta: float,)->None:
+        super().__init__()
 
