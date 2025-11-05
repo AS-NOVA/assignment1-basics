@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple, Iterable, Optional, Callable
 from torch import Tensor
 import math
 
-class AdamW(torch.optim.Optimizer):
+class MyAdamW(torch.optim.Optimizer):
     def __init__(self, 
                  params: Iterable[Tensor] | Iterable[Dict[str, Any]] | Iterable[Tuple[str, Tensor]], 
                  lr: float,
@@ -77,3 +77,38 @@ class AdamW(torch.optim.Optimizer):
                 
                 state["t"] = t + 1
         return loss
+    
+
+
+def cosine_annealing_with_warm_up(
+    it: int,
+    max_learning_rate: float,
+    min_learning_rate: float,
+    warmup_iters: int,
+    cosine_cycle_iters: int,
+)->float:
+    t = it
+    min = min_learning_rate
+    max = max_learning_rate
+    Tw = warmup_iters
+    Tc = cosine_cycle_iters
+    if t < Tw:
+        lr = t * max / Tw
+    elif t >= Tw and t <= Tc:
+        theta = math.pi * (t-Tw) / (Tc-Tw)
+        lr = min + 0.5 * (1 + math.cos(theta)) * (max-min)
+    elif t > Tc:
+        lr = min
+    return lr
+
+def gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float)->None:
+    sum = 0
+    for param in parameters:
+        if param.grad != None:
+            sum += torch.norm(param.grad)**2
+    total_norm = math.sqrt(sum)
+    if total_norm >= max_l2_norm:
+        k = max_l2_norm / (total_norm + 1e-6)
+        for param in parameters:
+            if param.grad != None:
+                param.grad.mul_(k)

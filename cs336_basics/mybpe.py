@@ -1,7 +1,10 @@
 from cs336_basics.pretokenization_example import *
 import regex as re
-from IPython.display import clear_output, display
+# from IPython.display import clear_output, display
 
+# uv run pytest tests/test_train_bpe.py
+
+# 从文件路径读入字节序列，用给出的切分函数找到chunk的边界，分段读入
 def path_to_chunks_bytes(p:str | os.PathLike, n_parallel: int) -> list[bytes] :
     res = []
     with open(p,"rb") as f:
@@ -13,9 +16,11 @@ def path_to_chunks_bytes(p:str | os.PathLike, n_parallel: int) -> list[bytes] :
             res.append(chunk)
     return res
 
-# 对于每段文本，去掉特殊token并切分的过程
-def pre_tokenization_for_chunk(text_chunk_bytes:bytes, special_tokens: list[str]) -> list[str]:
-    text_chunk = text_chunk_bytes.decode("utf-8")
+# 对于每段字符串，去掉特殊token并预分词，返回预分词列表
+# 曾经接收bytes，现改为str，方便在tokenizer中复用，因为那里的习题要求接收str而非bytes
+# TODO:加入一个保留特殊token的选项，以便在encode的时候保留它们，而不是扔掉！！
+def pre_tokenization_for_chunk(text_chunk:str, special_tokens: list[str]) -> list[str]:
+    # text_chunk = text_chunk_bytes.decode("utf-8")
     escaped_special_tokens = [re.escape(t) for t in special_tokens]
     escaped_special_tokens_in_one_str = "|".join(escaped_special_tokens)
     # print(escaped_special_tokens_in_one_str)
@@ -27,6 +32,7 @@ def pre_tokenization_for_chunk(text_chunk_bytes:bytes, special_tokens: list[str]
         for match in it:
             pre_tokenization.append(match.group())
     return pre_tokenization
+
 
 def get_all_pretoken_bytes_and_build_count_dict(pre_tokens:list[list[str]]) -> dict[bytes,int]:
     res = {}
@@ -218,7 +224,8 @@ def my_bpe(input_path:str | os.PathLike, vocab_size:int, special_tokens:list[str
     # 对每段文本进行预分词
     pre_tokens = []
     for chunk in chunks_bytes:
-        pretok = pre_tokenization_for_chunk(chunk, special_tokens)
+        chunk_str = chunk.decode("utf-8")
+        pretok = pre_tokenization_for_chunk(chunk_str, special_tokens)
         pre_tokens.append(pretok)
     # 整合所有预分词结果并转为bytes类型的token，建立词频字典
     pre_tokens_bytes_dict = get_all_pretoken_bytes_and_build_count_dict(pre_tokens)
@@ -228,3 +235,18 @@ def my_bpe(input_path:str | os.PathLike, vocab_size:int, special_tokens:list[str
     (vocab,merge) = main_bpe(pre_token_ints_dict=pre_token_ints_dict, vocab_size=vocab_size, special_tokens=special_tokens)
 
     return (vocab,merge)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

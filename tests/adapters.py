@@ -540,6 +540,9 @@ def run_get_batch(
     """
     raise NotImplementedError
 
+
+
+
 # passed 未对答案 einops性能开销
 def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, " ..."]:
     """
@@ -574,7 +577,7 @@ def run_cross_entropy(
     """
     return cross_entropy(inputs,targets)
 
-
+# passed（未核对）
 def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float) -> None:
     """Given a set of parameters, clip their combined gradients to have l2 norm at most max_l2_norm.
 
@@ -584,7 +587,8 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
 
     The gradients of the parameters (parameter.grad) should be modified in-place.
     """
-    raise NotImplementedError
+    gradient_clipping(parameters=parameters, max_l2_norm=max_l2_norm)
+
 
 # passed（未核对）
 from cs336_basics.myoptimizer import *
@@ -592,10 +596,9 @@ def get_adamw_cls() -> Any:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    return AdamW
-    
+    return MyAdamW
 
-
+# passed
 def run_get_lr_cosine_schedule(
     it: int,
     max_learning_rate: float,
@@ -621,8 +624,14 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
-    raise NotImplementedError
-
+    res = cosine_annealing_with_warm_up(
+            it=it,
+            max_learning_rate=max_learning_rate,
+            min_learning_rate=min_learning_rate,
+            warmup_iters=warmup_iters,
+            cosine_cycle_iters=cosine_cycle_iters
+        )
+    return res
 
 def run_save_checkpoint(
     model: torch.nn.Module,
