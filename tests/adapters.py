@@ -672,7 +672,8 @@ def run_load_checkpoint(
     """
     raise NotImplementedError
 
-
+# uv run pytest tests/test_tokenizer.py
+from cs336_basics.mytokenizer import MyTokenizer
 def get_tokenizer(
     vocab: dict[int, bytes],
     merges: list[tuple[bytes, bytes]],
@@ -693,7 +694,7 @@ def get_tokenizer(
     Returns:
         A BPE tokenizer that uses the provided vocab, merges, and special tokens.
     """
-    raise NotImplementedError
+    return MyTokenizer(vocab=vocab,merges=merges, special_tokens=special_tokens)
 
 # passed
 def run_train_bpe(

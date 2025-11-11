@@ -1,5 +1,6 @@
 from cs336_basics.pretokenization_example import *
 import regex as re
+
 # from IPython.display import clear_output, display
 
 # uv run pytest tests/test_train_bpe.py
@@ -18,16 +19,46 @@ def path_to_chunks_bytes(p:str | os.PathLike, n_parallel: int) -> list[bytes] :
 
 # 对于每段字符串，去掉特殊token并预分词，返回预分词列表
 # 曾经接收bytes，现改为str，方便在tokenizer中复用，因为那里的习题要求接收str而非bytes
-# TODO:加入一个保留特殊token的选项，以便在encode的时候保留它们，而不是扔掉！！
-def pre_tokenization_for_chunk(text_chunk:str, special_tokens: list[str]) -> list[str]:
-    # text_chunk = text_chunk_bytes.decode("utf-8")
-    escaped_special_tokens = [re.escape(t) for t in special_tokens]
-    escaped_special_tokens_in_one_str = "|".join(escaped_special_tokens)
-    # print(escaped_special_tokens_in_one_str)
-    splited_text = re.split(escaped_special_tokens_in_one_str,text_chunk)
+def pre_tokenization_for_chunk(text_chunk:str, special_tokens: list[str]|None = None, keep_special_tokens:bool = True) -> list[str]:
+    """
+    给出一段文本，将其进行预分词，返回预分词得到的pre-token列表。
+    允许用户设置特殊token，它们将被单独优先分割，且不会与其他内容混在一起。
+
+    Args:
+        text_chunk (str): 输入文本，字符串形式。
+        special_tokens (list[str] | None = None) : 特殊token列表，字符串形式，默认为空。
+            特殊token将会优先被匹配，自成一个pre-token，而不会与其他内容混在一起。
+        keep_special_tokens (bool = True) : 预分词结果中是否保留特殊token，默认保留。
+            如果保留特殊token，就能够保证正确地将全部原文本进行合理的预分词。
+            不保留特殊token的形式主要用于bpe训练过程，可以防止特殊token自身的内容干扰不断merge的过程。
+
+    Returns:
+        list[str] : 原文本预分词的结果，即一个字符串形式的pre-token列表。
+    """
+    # 如果没有special tokens，必须特判，否则导致re.split用空串分割所有东西，导致所有字符被拆开
+    if not special_tokens:
+        #print("无special tokens")
+        splited_text = [text_chunk]
+    else:
+        # text_chunk = text_chunk_bytes.decode("utf-8")
+        escaped_special_tokens = [re.escape(t) for t in special_tokens]
+        escaped_special_tokens_in_one_str = "|".join(escaped_special_tokens)
+        # print("所有特殊token组合起来得到的用于re.split切分的串：",escaped_special_tokens_in_one_str)
+        if keep_special_tokens == True:
+            escaped_special_tokens_in_one_str = "("+escaped_special_tokens_in_one_str+")"
+        elif keep_special_tokens == False:
+            pass
+        # # print(escaped_special_tokens_in_one_str)
+        splited_text = re.split(escaped_special_tokens_in_one_str,text_chunk)
+        # print("re.split将原始文本在specialtoken处切断（可能保留或不保留切分点），得到的结果：",splited_text)
+
     pre_tokenization = []
     PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
     for doc in splited_text:
+        # ！！！注意 如果要保留special token，就还需要保护其所在的片段，免受预分词！！！
+        if keep_special_tokens and special_tokens and doc in special_tokens:
+            pre_tokenization.append(doc)
+            continue
         it = re.finditer(PAT,doc)
         for match in it:
             pre_tokenization.append(match.group())
@@ -225,7 +256,7 @@ def my_bpe(input_path:str | os.PathLike, vocab_size:int, special_tokens:list[str
     pre_tokens = []
     for chunk in chunks_bytes:
         chunk_str = chunk.decode("utf-8")
-        pretok = pre_tokenization_for_chunk(chunk_str, special_tokens)
+        pretok = pre_tokenization_for_chunk(chunk_str, special_tokens,keep_special_tokens=False)
         pre_tokens.append(pretok)
     # 整合所有预分词结果并转为bytes类型的token，建立词频字典
     pre_tokens_bytes_dict = get_all_pretoken_bytes_and_build_count_dict(pre_tokens)
