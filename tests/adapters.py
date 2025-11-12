@@ -673,6 +673,7 @@ def run_load_checkpoint(
     raise NotImplementedError
 
 # uv run pytest tests/test_tokenizer.py
+# passed！虽然迭代编码和从路径读入部分是抄的 其他部分是自己写的
 from cs336_basics.mytokenizer import MyTokenizer
 def get_tokenizer(
     vocab: dict[int, bytes],

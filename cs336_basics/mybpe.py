@@ -41,6 +41,7 @@ def pre_tokenization_for_chunk(text_chunk:str, special_tokens: list[str]|None = 
         splited_text = [text_chunk]
     else:
         # text_chunk = text_chunk_bytes.decode("utf-8")
+        special_tokens.sort(reverse=True) # 降序排序，以保证：在需要保留特殊token的预分词过程中，如果一个特殊token中包含另一个，会优先匹配长的那个
         escaped_special_tokens = [re.escape(t) for t in special_tokens]
         escaped_special_tokens_in_one_str = "|".join(escaped_special_tokens)
         # print("所有特殊token组合起来得到的用于re.split切分的串：",escaped_special_tokens_in_one_str)

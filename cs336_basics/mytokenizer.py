@@ -51,13 +51,28 @@ class MyTokenizer:
             self._merges_rank = dict([(merge, i) for (i, merge) in enumerate(self.merges)])
         return self._merges_rank
 
+
+    # 抄别人的
     @classmethod
     def from_files(cls,
                    vocab_filepath:str,
                    merges_filepath:str,
                    special_tokens:list[str]|None = None
-                   )->None:
-        raise NotImplementedError
+                   )->"MyTokenizer":
+        vocab: dict[int, bytes] = {}
+        with open(vocab_filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                id_str, token_str = line.strip().split("\t")
+                vocab[int(id_str)] = eval(token_str).encode("utf-8")
+
+        merges: list[tuple[bytes, bytes]] = []
+        with open(merges_filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) == 2:
+                    merges.append((eval(parts[0]).encode("utf-8"), eval(parts[1]).encode("utf-8")))
+
+        return cls(vocab=vocab, merges=merges, special_tokens=special_tokens)
 
     def encode(self,text:str) -> list[int]:
         """
@@ -156,11 +171,16 @@ class MyTokenizer:
             res.append(self._reverse_vocab[b])
         return res
 
-
+    # 抄别人的
     def encode_iterable(self,
                         iterable: Iterable[str]
                         )->Iterator[int]:
-        raise NotImplementedError
+        for line in iterable:
+            token_ids = self.encode(line)
+            yield from token_ids
 
     def decode(self,ids:list[int]) -> str:
-        raise NotImplementedError
+        res = b""
+        for id in ids:
+            res = res + self.vocab.get(id,"\ufffd".encode("utf-8"))
+        return res.decode("utf-8",errors="replace")
