@@ -13,6 +13,7 @@ from torch import Tensor
 from cs336_basics.mymodule import *
 from cs336_basics.mybpe import *
 from cs336_basics.mymodule import _copy_param
+from cs336_basics.mytraining import *
 
 # passed
 def run_linear(
@@ -517,7 +518,8 @@ def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
     """
     raise NotImplementedError
 
-
+# uv run pytest -k test_get_batch
+# passed
 def run_get_batch(
     dataset: npt.NDArray, batch_size: int, context_length: int, device: str
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -538,7 +540,10 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    raise NotImplementedError
+    return my_get_batch(dataset=dataset,
+                        batch_size=batch_size,
+                        context_length=context_length,
+                        device=device)
 
 
 
@@ -633,6 +638,7 @@ def run_get_lr_cosine_schedule(
         )
     return res
 
+# ai代写 passed
 def run_save_checkpoint(
     model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
@@ -649,9 +655,14 @@ def run_save_checkpoint(
             we've completed.
         out (str | os.PathLike | BinaryIO | IO[bytes]): Path or file-like object to serialize the model, optimizer, and iteration to.
     """
-    raise NotImplementedError
+    return my_save_checkpoint(
+        model=model,
+        optimizer=optimizer,
+        iteration=iteration,
+        out=out
+    )
 
-
+# ai代写 passed
 def run_load_checkpoint(
     src: str | os.PathLike | BinaryIO | IO[bytes],
     model: torch.nn.Module,
@@ -670,7 +681,11 @@ def run_load_checkpoint(
     Returns:
         int: the previously-serialized number of iterations.
     """
-    raise NotImplementedError
+    return my_load_checkpoint(
+        src=src,
+        model=model,
+        optimizer=optimizer
+    )
 
 # uv run pytest tests/test_tokenizer.py
 # passed！虽然迭代编码和从路径读入部分是抄的 其他部分是自己写的

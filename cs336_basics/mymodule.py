@@ -153,8 +153,8 @@ class RotaryPositionalEmbedding(nn.Module):
                 x: Float[Tensor, " ... sequence_length d_k"], 
                 token_positions: Int[Tensor, " ... sequence_length"]
                 ) -> Float[Tensor, " ... sequence_length d_k"]:
-        print("输入tensor维度：",x.shape)
-        print("输入位置索引维度：",token_positions.shape)
+        #print("输入tensor维度：",x.shape)
+        #print("输入位置索引维度：",token_positions.shape)
 
         if x.shape[:-1] != token_positions.shape:
             pass
