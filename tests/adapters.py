@@ -10,10 +10,11 @@ import torch.nn as nn
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
-from cs336_basics.mymodule import *
-from cs336_basics.mybpe import *
-from cs336_basics.mymodule import _copy_param
-from cs336_basics.mytraining import *
+from cs336_basics.my_module import *
+from cs336_basics.my_train_bpe import *
+from cs336_basics.my_module import _copy_param
+from cs336_basics.my_training_utils import *
+from cs336_basics.my_optimizer import *
 
 # passed
 def run_linear(
