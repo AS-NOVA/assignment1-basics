@@ -1,4 +1,4 @@
-data/
+data/*
 !data/small_test_data/
 wandb/
 
