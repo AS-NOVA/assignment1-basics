@@ -38,8 +38,8 @@ def parse_args():
     # 优化配置：AdamW参数，学习率调度参数，总步数
     parser.add_argument("--lr_max",         type=float, default=3e-4,   help="最大学习率")
     parser.add_argument("--lr_min",         type=float, default=3e-5,   help="最小学习率") # 设为最大学习率的十分之一
-    parser.add_argument("--total_iters",    type=int,   default=80000,  help="总迭代次数") # 若序列长16，batch大小256，投入token数327680000，恰需80000步
-    parser.add_argument("--warmup_iters",   type=int,   default=500,    help="学习率热身步数")    # 总步数的10%
+    parser.add_argument("--total_iters",    type=int,   default=10000,  help="总迭代次数") # 若序列长256，batch大小256，投入token数327680000，恰需5000步
+    parser.add_argument("--warmup_iters",   type=int,   default=1000,    help="学习率热身步数")    # 总步数的10%
     parser.add_argument("--beta1",          type=float, default=0.9,    help="AdamW 一阶矩估计的衰减率")
     parser.add_argument("--beta2",          type=float, default=0.999,  help="AdamW 二阶矩估计的衰减率")
     parser.add_argument("--eps",            type=float, default=1e-8,   help="AdamW 防止除零的平滑项")
@@ -47,7 +47,7 @@ def parse_args():
 
     # 训练配置：种子，批量大小
     parser.add_argument("--seed",           type=int,   default=42,     help="随机种子")
-    parser.add_argument("--batch_size",     type=int,   default=16,     help="批量大小")
+    parser.add_argument("--batch_size",     type=int,   default=128,     help="批量大小")
     
     args = parser.parse_args()
     return args
