@@ -1,4 +1,4 @@
-from cs336_basics.mybpe import pre_tokenization_for_chunk
+from cs336_basics.my_train_bpe import pre_tokenization_for_chunk
 from typing import Iterable, Iterator
 
 # uv run pytest tests/test_tokenizer.py
@@ -13,11 +13,12 @@ class MyTokenizer:
         _merges_rank (dict[tuple[bytes,bytes],int]) : merge序号表，便于O(1)查找到任何merge的序号，判断其顺序
         special_tokens (list[str]| None): 额外提供的特殊token，将来使用时必须将这些特殊token视为独立单位，而不能分割
     """
-    def __init__(self,
-                 vocab:dict[int,bytes],
-                 merges:list[tuple[bytes,bytes]],
-                 special_tokens:list[str]| None = None
-                 )-> None:
+    def __init__(
+        self,
+        vocab:dict[int,bytes],
+        merges:list[tuple[bytes,bytes]],
+        special_tokens:list[str]| None = None,
+    )-> None:
         """
         接收vocab、merges和特殊token序列以进行分词器的初始化。
         初始化过程中会建立vocab的反表，并词典化merges，便于按输入内容进行encode。
@@ -53,26 +54,27 @@ class MyTokenizer:
 
 
     # 抄别人的
-    @classmethod
-    def from_files(cls,
-                   vocab_filepath:str,
-                   merges_filepath:str,
-                   special_tokens:list[str]|None = None
-                   )->"MyTokenizer":
-        vocab: dict[int, bytes] = {}
-        with open(vocab_filepath, "r", encoding="utf-8") as f:
-            for line in f:
-                id_str, token_str = line.strip().split("\t")
-                vocab[int(id_str)] = eval(token_str).encode("utf-8")
+    # @classmethod
+    # def from_files(
+    #     cls,
+    #     vocab_filepath:str,
+    #     merges_filepath:str,
+    #     special_tokens:list[str]|None = None,
+    # )->"MyTokenizer":
+    #     vocab: dict[int, bytes] = {}
+    #     with open(vocab_filepath, "r", encoding="utf-8") as f:
+    #         for line in f:
+    #             id_str, token_str = line.strip().split("\t")
+    #             vocab[int(id_str)] = eval(token_str).encode("utf-8")
 
-        merges: list[tuple[bytes, bytes]] = []
-        with open(merges_filepath, "r", encoding="utf-8") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) == 2:
-                    merges.append((eval(parts[0]).encode("utf-8"), eval(parts[1]).encode("utf-8")))
+    #     merges: list[tuple[bytes, bytes]] = []
+    #     with open(merges_filepath, "r", encoding="utf-8") as f:
+    #         for line in f:
+    #             parts = line.strip().split()
+    #             if len(parts) == 2:
+    #                 merges.append((eval(parts[0]).encode("utf-8"), eval(parts[1]).encode("utf-8")))
 
-        return cls(vocab=vocab, merges=merges, special_tokens=special_tokens)
+    #     return cls(vocab=vocab, merges=merges, special_tokens=special_tokens)
 
     def encode(self,text:str) -> list[int]:
         """
@@ -172,9 +174,10 @@ class MyTokenizer:
         return res
 
     # 抄别人的
-    def encode_iterable(self,
-                        iterable: Iterable[str]
-                        )->Iterator[int]:
+    def encode_iterable(
+        self,
+        iterable: Iterable[str],
+    )->Iterator[int]:
         for line in iterable:
             token_ids = self.encode(line)
             yield from token_ids

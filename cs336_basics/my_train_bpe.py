@@ -1,8 +1,6 @@
 from cs336_basics.pretokenization_example import *
 import regex as re
 
-# from IPython.display import clear_output, display
-
 # uv run pytest tests/test_train_bpe.py
 
 # 从文件路径读入字节序列，用给出的切分函数找到chunk的边界，分段读入
@@ -269,6 +267,62 @@ def my_bpe(input_path:str | os.PathLike, vocab_size:int, special_tokens:list[str
     return (vocab,merge)
 
 
+class BytesToStrConverter:
+    """
+    将bytes形式的token转换为字符串形式的token，防止控制字符等无法显示的问题。
+    转换规则参考gpt2的实现。
+    """
+    byte_encoder: dict[int,str]
+
+    def __init__(self) -> None:
+        self.byte_encoder = get_gpt2_bytes_to_chr_dict()
+    
+    def convert(self, token_bytes: bytes) -> str:
+        return "".join([self.byte_encoder[b] for b in token_bytes])
+
+def get_gpt2_bytes_to_chr_dict()->dict[int,str]:
+    """
+    生成将字节按gpt2风格转为字符的字典。
+    
+    转换规则：将每个字节（0-255）映射到一个具体的unicode字符，其中原本就对应字符的字节不变，而对应控制字符的字节映射到256及以上的从小到大依次映射到从256开始的字符。
+
+    返回一个字典：{字节整数值: 安全的Unicode字符}
+    """
+    bs = list(range(ord("!"), ord("~")+1)) + list(range(ord("¡"), ord("¬")+1)) + list(range(ord("®"), ord("ÿ")+1))  # 所有对应字符的字节（数值）
+    cs = [b for b in bs]    # 数值不变
+    n = 0
+    for b in range(2**8):
+        if b not in bs: # 不对应字符的字节（数值）
+            bs.append(b)
+            cs.append(2**8 + n) # 用自身
+            n += 1
+    cs = [chr(n) for n in cs]
+    return dict(zip(bs, cs))
+
+def save_vocab_and_merge_to_disk(
+    vocab: dict[int,bytes],
+    merge: list[tuple[bytes,bytes]],
+    save_path: str | os.PathLike,
+    tokenizer_name: str,
+) -> None:
+    import os
+    import json
+    converter = BytesToStrConverter()
+    target_dir = os.path.join(save_path, tokenizer_name)
+    os.makedirs(target_dir, exist_ok=True)
+
+    vocab_path = os.path.join(target_dir, "vocab.json")
+    merges_path = os.path.join(target_dir, "merges.txt")
+
+    # 将 bytes 转为可读字符串，JSON key 用字符串形式的 id
+    vocab_serializable = {str(i): converter.convert(tok) for i, tok in vocab.items()}
+    with open(vocab_path, "w", encoding="utf-8") as f:
+        json.dump(vocab_serializable, f, ensure_ascii=False, indent=2)
+
+    # 每行写入一条 merge 规则
+    with open(merges_path, "w", encoding="utf-8") as f:
+        for left, right in merge:
+            f.write(f"{converter.convert(left)} {converter.convert(right)}\n")
 
 
 

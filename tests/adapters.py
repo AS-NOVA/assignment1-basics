@@ -10,10 +10,11 @@ import torch.nn as nn
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
-from cs336_basics.my_module import *
 from cs336_basics.my_train_bpe import *
+from cs336_basics.my_tokenizer import *
+from cs336_basics.my_module import *
 from cs336_basics.my_module import _copy_param
-from cs336_basics.my_training_utils import *
+from cs336_basics.my_data_utils import *
 from cs336_basics.my_optimizer import *
 
 # passed
@@ -597,7 +598,6 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
 
 
 # passed（未核对）
-from cs336_basics.myoptimizer import *
 def get_adamw_cls() -> Any:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
@@ -690,7 +690,6 @@ def run_load_checkpoint(
 
 # uv run pytest tests/test_tokenizer.py
 # passed！虽然迭代编码和从路径读入部分是抄的 其他部分是自己写的
-from cs336_basics.mytokenizer import MyTokenizer
 def get_tokenizer(
     vocab: dict[int, bytes],
     merges: list[tuple[bytes, bytes]],

@@ -5,6 +5,9 @@ from einops import rearrange, einsum, reduce, pack, unpack
 from jaxtyping import Float, Int, Bool
 import math
 
+# 这里所有的模块都继承自nn.Module
+# 其中的参数都用nn.Parameter创建
+
 class Linear(nn.Module) :
     def __init__(self, 
                  in_features:int, 

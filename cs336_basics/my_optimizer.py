@@ -4,13 +4,14 @@ from torch import Tensor
 import math
 
 class MyAdamW(torch.optim.Optimizer):
-    def __init__(self, 
-                 params: Iterable[Tensor] | Iterable[Dict[str, Any]] | Iterable[Tuple[str, Tensor]], 
-                 lr: float,
-                 betas:tuple[float,float],
-                 eps:float,
-                 weight_decay:float
-                 ) -> None:
+    def __init__(
+        self, 
+        params: Iterable[Tensor] | Iterable[Dict[str, Any]] | Iterable[Tuple[str, Tensor]], 
+        lr: float,
+        betas:tuple[float,float],
+        eps:float,
+        weight_decay:float,
+    ) -> None:
         beta1, beta2 = betas
         if lr < 0 or weight_decay < 0 or eps < 0:
             raise ValueError(f"these params should be positive, \
@@ -23,11 +24,11 @@ class MyAdamW(torch.optim.Optimizer):
             "beta1":beta1,
             "beta2":beta2,
             "eps":eps,
-            "weight_decay":weight_decay
+            "weight_decay":weight_decay,
         }
         super().__init__(params, defaults)
 
-    @torch.no_grad()
+    @torch.no_grad()    # 优化器本身的计算不需要维护计算图，取消梯度记录！
     def step(self, closure: Optional[Callable] = None): 
         loss = None
         if closure is not None:
@@ -45,9 +46,11 @@ class MyAdamW(torch.optim.Optimizer):
                     continue
                 g = p.grad  # 获得梯度
                 state = self.state[p] # 获得其他信息
-                # self.state是一个字典
-                # 其中每个kv对是 参数-参数信息，参数信息也是一个字典
-                # 参数信息可以随自己心意存储，例如"t"存储时间步
+                # 我们的优化器的state属性是一个字典
+                # 其中每个kv对是 参数:参数信息，用self.state[p]获取某个参数的信息
+                # 参数的信息也是一个字典，可以随自己心意存储
+                # 例如如果优化器需要记录时间步，就可以用"t"存储时间步
+                # 如果优化器需要记录动量，就可以用"first_moment"存储一阶动量，等等
 
                 #最初：m和v为0，t没有
                 # 当伪代码中t=1的循环时，做的事：
