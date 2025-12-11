@@ -109,7 +109,7 @@ class BpeManager:
     def get_int_pair_occur_times(self,intpair:tuple[int,int]) -> int:
         sum = 0
         for pretokints in self.inv_index[intpair]:
-            sum += self.get_int_pair_occur_in_ints(intpair,pretokints) * self.data[pretokints]
+            sum = sum + self.get_int_pair_occur_in_ints(intpair,pretokints) * self.data[pretokints]
         return sum
 
     def get_max_token_pair_int(self) -> tuple[int,int]:

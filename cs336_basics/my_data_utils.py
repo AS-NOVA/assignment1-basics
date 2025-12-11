@@ -8,8 +8,24 @@ import os
 # uv run pytest -k test_get_batch
 
 def my_get_batch(
-    dataset: npt.NDArray, batch_size: int, context_length: int, device: str
+    dataset: npt.NDArray,
+    batch_size: int,
+    context_length: int,
+    device: torch.device,
 ) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    从numpy数组格式的dataset中随机选择起点，采样batch_size个序列，每个序列长度为context_length。
+    Args:
+        dataset (npt.NDArray): 一维numpy数组，表示token序列
+        batch_size (int): 批量大小
+        context_length (int): 上下文长度
+        device (str): 设备字符串，如'cpu'或'cuda'
+    Returns:
+        output(tuple[torch.Tensor, torch.Tensor]):
+            - seqs: 形状为(batch_size, context_length)的tensor，表示输入序列
+            - labels: 形状为(batch_size, context_length)的tensor，表示标签序列
+            - seqs 和 labels 相互错开一位
+    """
     data_len = len(dataset)
     start_pos = np.random.randint(0,data_len-context_length,batch_size)
     # 起点下标下限为0，上限为data_len-context_length-1

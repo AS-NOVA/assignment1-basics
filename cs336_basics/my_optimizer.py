@@ -104,11 +104,17 @@ def cosine_annealing_with_warm_up(
         lr = min
     return lr
 
-def gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float)->None:
+def gradient_clipping(
+    parameters: Iterable[torch.nn.Parameter],
+    max_l2_norm: float,
+)->None:
+    """
+    放缩所有参数的梯度，使得整体的L2范数不超过max_l2_norm
+    """
     sum = 0
     for param in parameters:
         if param.grad != None:
-            sum += torch.norm(param.grad)**2
+            sum = sum + torch.norm(param.grad)**2
     total_norm = math.sqrt(sum)
     if total_norm >= max_l2_norm:
         k = max_l2_norm / (total_norm + 1e-6)

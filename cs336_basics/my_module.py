@@ -71,6 +71,8 @@ class Embedding(nn.Module):
 
     def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
         # tensor操作：直接用tensor作为索引！
+        # 作为索引的tensor必须是长整型，否则例如uint16会报错
+        token_ids = token_ids.long()
         return self.embedding_matrix[token_ids]
 
 class RMSNorm(nn.Module):
@@ -224,16 +226,16 @@ def scaled_dot_product_attention(
 class MultiHeadSelfAttention(nn.Module):
     # 这里多头注意力的算法参考原始transformer
     # 所以dk = dv = dmodel / heads
-    def __init__(self, 
-                 d_model:int,
-                 num_heads:int,
-                 max_seq_len:int,
-                 use_rope:bool = False,
-                 rope_theta:float = 10000.0,
-                 
-                 device:torch.device | None = None,
-                 dtype:torch.dtype | None = None
-                ) -> None:
+    def __init__(
+        self, 
+        d_model:int,
+        num_heads:int,
+        max_seq_len:int,
+        use_rope:bool = False,
+        rope_theta:float = 10000.0,
+        device:torch.device | None = None,
+        dtype:torch.dtype | None = None
+    ) -> None:
         super().__init__()
         self.d_model = d_model
         self.num_heads = num_heads
@@ -251,17 +253,26 @@ class MultiHeadSelfAttention(nn.Module):
         self.linear_Wv = Linear(self.d_model, self.d_model, **parameter_kwargs)
         self.linear_Wo = Linear(self.d_model, self.d_model, **parameter_kwargs)
 
-        self.pre_cache_mask =torch.tril(torch.ones(max_seq_len, max_seq_len)).bool()
+        # self.pre_cache_mask =torch.tril(torch.ones(max_seq_len, max_seq_len, device=device)).bool()
+        self.register_buffer(
+            "pre_cache_mask",
+            torch.tril(torch.ones(max_seq_len, max_seq_len, device=device)).bool(),
+            persistent=False,
+        )
 
         if self.use_rope == True:
-            self.rope = RotaryPositionalEmbedding(self.rope_theta,
-                                                  self.d_head,
-                                                  self.max_seq_len,)
+            self.rope = RotaryPositionalEmbedding(
+                self.rope_theta,
+                self.d_head,
+                self.max_seq_len,
+                device=device,
+            )
 
-    def forward(self, 
-                x:Float[Tensor,"... len d_model"],
-                token_positions:Int[Tensor, " ... sequence_length"] | None = None, #注意位置参数是随着模块的使用而传入的呀
-                )->Float[Tensor,"... len d_model"]:
+    def forward(
+        self, 
+        x:Float[Tensor,"... len d_model"],
+        token_positions:Int[Tensor, " ... sequence_length"] | None = None, #注意位置参数是随着模块的使用而传入的呀
+    )->Float[Tensor,"... len d_model"]:
         len = x.shape[-2]
         Q = self.linear_Wq(x)
         K = self.linear_Wk(x)
@@ -275,6 +286,7 @@ class MultiHeadSelfAttention(nn.Module):
             Ks = self.rope(Ks,token_positions)
 
         Vs = rearrange(V,"... len (num_heads d_head) -> ... num_heads len d_head", num_heads = self.num_heads)
+        self.pre_cache_mask:torch.Tensor
         mask = self.pre_cache_mask[:len,:len]
         As = scaled_dot_product_attention(Qs,Ks,Vs,mask)
         A = rearrange(As,"... num_heads len d_head -> ... len (num_heads d_head)")
@@ -321,12 +333,13 @@ class TransformerBlock(nn.Module):
             **parameter_kwargs
         )
 
-    def forward(self,
-                x:Float[Tensor,"batch_size seq_len d_model"],
-                token_positions:Int[Tensor,"batch_size seq_len"]
-                )->Float[Tensor,"batch_size seq_len d_model"]:
-        x += self.mhsa.forward(self.rms1.forward(x),token_positions)
-        x += self.ffn.forward(self.rms2.forward(x))
+    def forward(
+        self,
+        x:Float[Tensor,"batch_size seq_len d_model"],
+        token_positions:Int[Tensor,"batch_size seq_len"],
+    )->Float[Tensor,"batch_size seq_len d_model"]:
+        x = x + self.mhsa.forward(self.rms1.forward(x),token_positions)
+        x = x + self.ffn.forward(self.rms2.forward(x))
         return x
     
 
@@ -334,42 +347,54 @@ class TransformerBlock(nn.Module):
 
 
 class TransformerLanguageModel(nn.Module):
-    def __init__(self, 
-                 vocab_size: int,
-                 context_length: int,
-                 num_layers: int,
-                 d_model: int,
-                 num_heads: int,
-                 d_ff: int,
-                 rope_theta: float,
-                 device:torch.device | None = None,
-                 dtype:torch.dtype | None = None
-                ) -> None:
+    def __init__(
+        self, 
+        vocab_size: int,
+        context_length: int,
+        d_model: int,
+        num_layers: int,
+        num_heads: int,
+        d_ff: int,
+        rope_theta: float,
+        device:torch.device | None = None,
+        dtype:torch.dtype | None = None,
+    ) -> None:
         super().__init__()
-        self.emb = Embedding(num_embeddings=vocab_size,
-                             embedding_dim=d_model,
-                             device=device,
-                             dtype=dtype)
-        self.blocks:list[TransformerBlock] = []
+        self.emb = Embedding(
+            num_embeddings=vocab_size,
+            embedding_dim=d_model,
+            device=device,
+            dtype=dtype,
+        )
+        self.blocks:nn.ModuleList = nn.ModuleList()
         for _ in range(num_layers):
-            self.blocks.append(TransformerBlock(d_model=d_model,
-                                              num_heads=num_heads,
-                                              d_ff=d_ff,
-                                              max_seq_len=context_length,
-                                              theta=rope_theta,
-                                              device=device,
-                                              dtype=dtype) )
-        self.out_norm = RMSNorm(d_model=d_model,
-                                device=device,
-                                dtype=dtype)
-        self.head = Linear(in_features=d_model,
-                           out_features=vocab_size,
-                           device=device,
-                           dtype=dtype)
+            self.blocks.append(
+                TransformerBlock(
+                    d_model=d_model,
+                    num_heads=num_heads,
+                    d_ff=d_ff,
+                    max_seq_len=context_length,
+                    theta=rope_theta,
+                    device=device,
+                    dtype=dtype,
+                )
+            )
+        self.out_norm = RMSNorm(
+            d_model=d_model,
+            device=device,
+            dtype=dtype,
+        )
+        self.head = Linear(
+            in_features=d_model,
+            out_features=vocab_size,
+            device=device,
+            dtype=dtype,
+        )
         
-    def forward(self,
-               input_tokens:Int[Tensor,"batch_size seq_len"]
-               ):
+    def forward(
+        self,
+        input_tokens:Int[Tensor,"batch_size seq_len"],
+    ):
         s = input_tokens.shape[-1]
         x = self.emb.forward(input_tokens)
         positions = torch.arange(s, device=x.device)
@@ -395,14 +420,17 @@ def _copy_param(target: torch.Tensor, source: torch.Tensor) -> None:
                          f"into tensor of shape {target.shape}")
 
 
-def cross_entropy(x:Float[Tensor,"... len vocab_size"],   # 省略了前置的batch，而这里实际上len也可以被看成一种batch
-                  real:Int[Tensor,"... len"]
-                 )->Float[Tensor, ""]:
+def cross_entropy(
+    x:Float[Tensor,"... len vocab_size"],   # 省略了前置的batch，而这里实际上len也可以被看成一种batch
+    real:Int[Tensor,"... len"],
+)->Float[Tensor, ""]:
+    
     xmax = reduce(x,"... v -> ... 1","max")
-    x -= xmax
+    x = x - xmax
     expx = torch.exp(x)
     logsumexps = torch.log(reduce(expx,"... v -> ...","sum"))
     real = rearrange(real,"... -> ... 1")
+    real = real.long()
     select = torch.gather(input=x,dim=-1,index=real)
     select = rearrange(select,"... 1 -> ...")
     res = - select + logsumexps

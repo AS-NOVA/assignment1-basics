@@ -92,7 +92,7 @@ class MyTokenizer:
             # #print(pretok_bytes)
             ints = self._encode_for_bytes(pretok_bytes)
             # #print(ints)
-            res += ints
+            res = res + ints
         #print("编码结果：",res)
         return res
 
