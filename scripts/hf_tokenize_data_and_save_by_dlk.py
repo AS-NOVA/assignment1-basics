@@ -92,20 +92,20 @@ def process_train_val(
 
 
 def main():
-    tokenizer_path = Path("hf_tokenizer/openwebtext-32k/tokenizer.json")
-    train_input_path = Path("data/owt_train.txt")
-    val_input_path = Path("data/owt_valid.txt")
-    output_dir = Path("data/openwebtext-32k")
+    # tokenizer_path = Path("hf_tokenizer/openwebtext-32k/tokenizer.json")
+    # train_input_path = Path("data/owt_train.txt")
+    # val_input_path = Path("data/owt_valid.txt")
+    # output_dir = Path("data/openwebtext-32k")
     
-    # tokenizer_path = Path("hf_tokenizer/tinystories/tokenizer.json")
-    # train_input_path = Path("data/TinyStoriesV2-GPT4-train.txt")
-    # val_input_path = Path("data/TinyStoriesV2-GPT4-valid.txt")
-    # output_dir = Path("data/tinystories")
+    tokenizer_path = Path("hf_tokenizer/tinystories/tokenizer.json")
+    train_input_path = Path("data/TinyStoriesV2-GPT4-train.txt")
+    val_input_path = Path("data/TinyStoriesV2-GPT4-valid.txt")
+    output_dir = Path("data/tinystories_bin")
 
     # adjust your parameters
     # the number of lines to process in each chunk, 
     # adjust based on your machine memory / tokenizer performance
-    chunk_lines = 1000000    
+    chunk_lines = 100000    
 
     process_train_val(
         tokenizer_path,

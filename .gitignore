@@ -1,3 +1,7 @@
+data/
+!data/small_test_data/
+wandb/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -161,7 +165,4 @@ cython_debug/
 
 .ruff_cache/
 *.zip
-data/TinyStoriesV2-GPT4-train.txt
-data/owt_valid.txt
-data/TinyStoriesV2-GPT4-valid.txt
-data/owt_train.txt
+
