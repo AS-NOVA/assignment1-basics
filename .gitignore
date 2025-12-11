@@ -1,6 +1,7 @@
 data/*
 !data/small_test_data/
 wandb/
+my_models/*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
