@@ -7,7 +7,7 @@ from tqdm import tqdm
 import wandb
 from cs336_basics.my_module import TransformerLanguageModel, cross_entropy
 from cs336_basics.my_optimizer import MyAdamW, cosine_annealing_with_warm_up, gradient_clipping
-from cs336_basics.my_data_utils import my_get_batch
+from cs336_basics.my_data_utils import my_get_batch, my_save_checkpoint
 #from cs336_basics.my_
 
 
@@ -18,7 +18,7 @@ def parse_args():
     # 路径配置：模型，数据，存档
     parser.add_argument("--train_data", type=str,   default="data/tinystories_bin/train.bin",   help="训练数据路径")
     parser.add_argument("--test_data",  type=str,   default="data/tinystories_bin/val.bin",     help="验证数据路径")
-    parser.add_argument("--output_dir", type=str,   default="my_models/TinyStories_17M",      help="模型保存目录")
+    parser.add_argument("--output_dir", type=str,   default="my_models/TinyStories_17M.pt",      help="模型保存目录")
 
     # Wandb 记录
     parser.add_argument("--wandb_project",      type=str, default="TinyStories_17M",    help="Wandb 项目名")
@@ -155,8 +155,8 @@ def main(args):
 
     print("开始训练...")
     start_time = time.time()
-    for it in tqdm(range(args.total_iters)):
-    # for it in tqdm(range(100)):
+    # for it in tqdm(range(args.total_iters)):
+    for it in tqdm(range(100)):
         lr = get_scheduled_lr(it, args)
         for param_group in optimizer.param_groups:  # 其实只有一个参数组
             param_group['lr'] = lr
@@ -167,6 +167,7 @@ def main(args):
         logits = model(input)
         loss = cross_entropy(logits, labels)
         wandb.log({"train/loss": loss.item(), "train/lr": lr}, step=it)
+        # 还可以（每过一段时间）监视分布的熵，梯度的范数，等等
 
         # 反向传播
         optimizer.zero_grad()
@@ -175,6 +176,8 @@ def main(args):
         # 优化一步
         clipped_grad = gradient_clipping(model.parameters(), max_l2_norm=1.0)
         optimizer.step()
+
+    my_save_checkpoint(model, optimizer, it, args.output_dir)
 
 
 # 入口
