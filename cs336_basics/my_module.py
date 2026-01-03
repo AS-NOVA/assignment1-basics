@@ -99,6 +99,10 @@ class RMSNorm(nn.Module):
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        将每个token对应的嵌入向量归一化（除以自身的均方根Root Mean Square）
+        然后乘以可学习的gain parameter
+        """
         in_dtype = x.dtype
         x = x.to(torch.float32)
         rms = torch.sqrt(reduce(x**2,"... d -> ... 1","mean") + self.eps) ** -1 
