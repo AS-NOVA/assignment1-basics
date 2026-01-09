@@ -12,13 +12,17 @@ from cs336_basics.my_data_utils import my_get_batch, my_save_checkpoint
 
 
 # 参数
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="cs336 ass1 training script")
+
+    # 参数确认
+    parser.add_argument('--no_confirm', action='store_false',default=True,dest="confirm", help='跳过参数确认，直接开始运行')
 
     # 路径配置：模型，数据，存档
     parser.add_argument("--train_data", type=str,   default="data/tinystories_bin/train.bin",   help="训练数据路径")
     parser.add_argument("--test_data",  type=str,   default="data/tinystories_bin/val.bin",     help="验证数据路径")
     parser.add_argument("--output_dir", type=str,   default="my_models/TinyStories_17M.pt",      help="模型保存目录")
+    parser.add_argument("--not_save_model", action="store_false",default=True,dest="save_model", help="是否不保存模型")
 
     # Wandb 记录
     parser.add_argument("--wandb_project",      type=str, default="TinyStories_17M",    help="Wandb 项目名")
@@ -37,9 +41,15 @@ def parse_args():
 
     # 优化配置：AdamW参数，学习率调度参数，总步数
     parser.add_argument("--lr_max",         type=float, default=3e-4,   help="最大学习率")
-    parser.add_argument("--lr_min",         type=float, default=3e-5,   help="最小学习率") # 设为最大学习率的十分之一
-    parser.add_argument("--total_iters",    type=int,   default=10000,  help="总迭代次数") # 若序列长256，batch大小256，投入token数327680000，恰需5000步
-    parser.add_argument("--warmup_iters",   type=int,   default=1000,    help="学习率热身步数")    # 总步数的10%
+    parser.add_argument("--lr_min_rate",    type=float, default=0.1,    help="最小学习率与最大学习率之比")
+    parser.add_argument("--total_iters",    type=int,   default=10000,  help="总迭代次数")
+    # 若序列长256，batch大小256，投入token数327680000，恰需5000步
+
+    # 训练中评估配置：评估间隔，单次评估采样次数
+    parser.add_argument("--eval_interval",  type=int,   default=500,    help="评估间隔步数")
+    parser.add_argument("--eval_iters",     type=int,   default=100,    help="评估步数")
+
+    parser.add_argument("--warmup_time",    type=float, default=0.1,    help="学习率热身步骤占比")
     parser.add_argument("--beta1",          type=float, default=0.9,    help="AdamW 一阶矩估计的衰减率")
     parser.add_argument("--beta2",          type=float, default=0.999,  help="AdamW 二阶矩估计的衰减率")
     parser.add_argument("--eps",            type=float, default=1e-8,   help="AdamW 防止除零的平滑项")
@@ -49,7 +59,7 @@ def parse_args():
     parser.add_argument("--seed",           type=int,   default=42,     help="随机种子")
     parser.add_argument("--batch_size",     type=int,   default=128,     help="批量大小")
     
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     return args
 
 def print_args(args):
@@ -121,17 +131,38 @@ def get_scheduled_lr(it,args):
     return cosine_annealing_with_warm_up(
         it=it,
         max_learning_rate=args.lr_max,
-        min_learning_rate=args.lr_min,
-        warmup_iters=args.warmup_iters,
+        min_learning_rate=args.lr_max * args.lr_min_rate,
+        warmup_iters=args.total_iters * args.warmup_time,
         cosine_cycle_iters=args.total_iters,
     )
 
+# 评估
 
+@torch.no_grad()
+def evaluate(model:TransformerLanguageModel, data, args, device):
+    """
+    Estimates the loss over a number of batches.
+    """
+    model.eval()
+    losses = []
+    entropies = []
+    for k in tqdm(range(args.eval_iters), desc="Evaluating", leave=False):
+        x, y = my_get_batch(data, args.batch_size, args.context_length, device)
+        logits = model(x)
+        loss = cross_entropy(logits, y)
+        losses.append(loss.item())
+        # entropies.append(compute_entropy_chunked(logits).mean().item())
+    model.train()
+    mean_loss = np.mean(losses)
+    return {
+        'val/loss': mean_loss,
+        # 'val/ppl': np.exp(mean_loss),
+        # 'val/entropy': np.mean(entropies)
+    }
 
 # 全流程，training loop
 def main(args):
-    print_args(args)
-    confirm_to_start_training()
+
 
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -154,9 +185,8 @@ def main(args):
     print("优化器构建完成。")
 
     print("开始训练...")
-    start_time = time.time()
-    # for it in tqdm(range(args.total_iters)):
-    for it in tqdm(range(100)):
+    for it in tqdm(range(args.total_iters)):
+    # for it in tqdm(range(100)):
         lr = get_scheduled_lr(it, args)
         for param_group in optimizer.param_groups:  # 其实只有一个参数组
             param_group['lr'] = lr
@@ -173,14 +203,23 @@ def main(args):
         optimizer.zero_grad()
         loss.backward()
 
+        if (it + 1) % args.eval_interval == 0:
+            eval_metrics = evaluate(model, val_data, args, device)
+            wandb.log(eval_metrics, step=it)
+            print(f"Step {it}: " + ", ".join([f"{k}={v:.4f}" for k, v in eval_metrics.items()]))
+
         # 优化一步
         clipped_grad = gradient_clipping(model.parameters(), max_l2_norm=1.0)
         optimizer.step()
 
-    my_save_checkpoint(model, optimizer, it, args.output_dir)
+    if args.save_model:
+        my_save_checkpoint(model, optimizer, it, args.output_dir)
 
 
 # 入口
 if __name__ == "__main__":
     args = parse_args()
+    print_args(args)
+    if args.confirm:
+        confirm_to_start_training()
     main(args)

@@ -20,6 +20,10 @@ dependencies = [
     "wandb>=0.19.7",
     "ty>=0.0.1a16",
     "tokenizers>=0.22.1",
+    "matplotlib",
+    "ipykernel>=7.1.0",
+    "pandas>=2.3.3",
+    "seaborn>=0.13.2",
 ]
 
 [build-system]
